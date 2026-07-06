@@ -2,7 +2,7 @@ import { NativeStackScreenProps } from "@react-navigation/native-stack";
 import React, { useEffect, useState } from "react";
 import { ActivityIndicator, FlatList, StyleSheet, Text, View } from "react-native";
 
-import { searchPlaces } from "../api/client";
+import { getApiErrorMessage, searchPlaces } from "../api/client";
 import PlaceCard from "../components/PlaceCard";
 import { Place, RootStackParamList } from "../types";
 
@@ -23,7 +23,10 @@ export default function ResultsScreen({ route, navigation }: Props) {
         const data = await searchPlaces(lat, lon, sport, radius);
         if (!cancelled) setPlaces(data.results);
       } catch (err) {
-        if (!cancelled) setError("Couldn't load nearby facilities. Pull to retry.");
+        console.error("Failed to load nearby places", err);
+        if (!cancelled) {
+          setError(getApiErrorMessage(err, "Couldn't load nearby facilities. Pull to retry."));
+        }
       } finally {
         if (!cancelled) setLoading(false);
       }

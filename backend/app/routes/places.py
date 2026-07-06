@@ -1,4 +1,5 @@
 import time
+import logging
 
 from fastapi import APIRouter, HTTPException, Query
 
@@ -8,6 +9,7 @@ from app.utils.distance import haversine_km, haversine_miles
 from app.utils.osm_query import SUPPORTED_SPORTS, build_overpass_query
 
 router = APIRouter()
+logger = logging.getLogger(__name__)
 
 CACHE_TTL_SECONDS = 300
 MAX_RESULTS = 50
@@ -82,6 +84,7 @@ async def get_places(
         try:
             data = await fetch_overpass_data(query)
         except OverpassError as exc:
+            logger.exception("Overpass lookup failed for sport=%s lat=%s lon=%s radius=%s", sport, lat, lon, radius)
             raise HTTPException(status_code=502, detail=str(exc))
         elements = data.get("elements", [])
         _cache[key] = (time.time(), elements)

@@ -1,9 +1,12 @@
+import logging
+
 from fastapi import APIRouter, HTTPException, Query
 
 from app.models.place import GeocodeResponse
 from app.services.nominatim import GeocodeError, geocode_location
 
 router = APIRouter()
+logger = logging.getLogger(__name__)
 
 
 @router.get("/geocode", response_model=GeocodeResponse)
@@ -11,8 +14,10 @@ async def geocode(q: str = Query(..., min_length=1, description="Location text t
     try:
         result = await geocode_location(q)
     except GeocodeError as exc:
+        logger.warning("Geocode returned no results for query='%s'", q)
         raise HTTPException(status_code=404, detail=str(exc))
     except Exception as exc:
+        logger.exception("Geocoding service request failed for query='%s'", q)
         raise HTTPException(status_code=502, detail=f"Geocoding service error: {exc}")
 
     return GeocodeResponse(**result)
