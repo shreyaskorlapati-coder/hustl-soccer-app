@@ -40,7 +40,7 @@
       }
     },
     "extra": {
-      "apiUrl": "https://sportify-black-gamma.vercel.app",
+      "apiUrl": "https://backend-hustl5.vercel.app",
       "googleMapsApiKey": "AIzaSyA6w--R_VGbjNwTmfplC96JgVhZ-ztEwHY",
       "eas": {
         "projectId": "63ed57be-1990-4940-9388-dd680c07f552"
