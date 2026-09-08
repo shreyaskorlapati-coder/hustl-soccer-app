@@ -1,0 +1,22 @@
+# Used by EAS instead of .gitignore when present.
+# Keep in sync with .gitignore so node_modules is never uploaded.
+
+node_modules/
+.expo/
+dist/
+web-build/
+
+.env
+.env*.local
+
+google-service-account.json
+*.keystore
+*.jks
+*.p8
+*.p12
+*.key
+*.mobileprovision
+
+.DS_Store
+npm-debug.*
+*.orig.*

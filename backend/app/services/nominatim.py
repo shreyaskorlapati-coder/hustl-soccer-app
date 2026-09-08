@@ -4,8 +4,8 @@ import time
 import httpx
 
 NOMINATIM_URL = "https://nominatim.openstreetmap.org/search"
-USER_AGENT = "SportsFinderApp/1.0 (contact@example.com)"
-MIN_REQUEST_INTERVAL = 1.0  # Nominatim usage policy caps requests at 1/sec.
+USER_AGENT = "SakahSoccerApp/1.0 (https://github.com/sakah-soccer-app)"
+MIN_REQUEST_INTERVAL = 1.1  # Nominatim usage policy caps requests at 1/sec.
 
 _last_request_time = 0.0
 _rate_limit_lock = asyncio.Lock()
@@ -28,9 +28,13 @@ async def geocode_location(query: str) -> dict:
     await _respect_rate_limit()
 
     params = {"q": query, "format": "json", "limit": 1}
-    headers = {"User-Agent": USER_AGENT}
+    headers = {
+        "User-Agent": USER_AGENT,
+        "Accept": "application/json",
+        "Accept-Language": "en-US,en;q=0.9",
+    }
 
-    async with httpx.AsyncClient(timeout=10.0) as client:
+    async with httpx.AsyncClient(timeout=10.0, follow_redirects=True) as client:
         response = await client.get(NOMINATIM_URL, params=params, headers=headers)
         response.raise_for_status()
         data = response.json()

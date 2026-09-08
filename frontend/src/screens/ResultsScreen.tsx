@@ -1,14 +1,17 @@
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { ActivityIndicator, FlatList, StyleSheet, Text, View } from "react-native";
 
 import { getApiErrorMessage, searchPlaces } from "../api/client";
 import PlaceCard from "../components/PlaceCard";
+import { useTheme, ThemeColors } from "../theme";
 import { Place, RootStackParamList } from "../types";
 
 type Props = NativeStackScreenProps<RootStackParamList, "Results">;
 
 export default function ResultsScreen({ route, navigation }: Props) {
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const { lat, lon, sport, radius, locationLabel } = route.params;
   const [places, setPlaces] = useState<Place[]>([]);
   const [loading, setLoading] = useState(true);
@@ -40,7 +43,7 @@ export default function ResultsScreen({ route, navigation }: Props) {
   if (loading) {
     return (
       <View style={styles.centered}>
-        <ActivityIndicator size="large" color="#1e88e5" />
+        <ActivityIndicator size="large" color={colors.accent} />
         <Text style={styles.stateText}>Finding nearby fields…</Text>
       </View>
     );
@@ -49,6 +52,7 @@ export default function ResultsScreen({ route, navigation }: Props) {
   if (error) {
     return (
       <View style={styles.centered}>
+        <Text style={styles.errorIcon}>⚠️</Text>
         <Text style={styles.stateText}>{error}</Text>
       </View>
     );
@@ -57,6 +61,7 @@ export default function ResultsScreen({ route, navigation }: Props) {
   if (places.length === 0) {
     return (
       <View style={styles.centered}>
+        <Text style={styles.emptyIcon}>🔍</Text>
         <Text style={styles.stateText}>No sports facilities found nearby</Text>
         <Text style={styles.stateSubtext}>Try a larger radius or a different sport.</Text>
       </View>
@@ -85,12 +90,54 @@ export default function ResultsScreen({ route, navigation }: Props) {
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#f5f6f8" },
-  header: { padding: 16, paddingBottom: 8 },
-  headerText: { fontSize: 15, fontWeight: "600", color: "#333" },
-  list: { paddingHorizontal: 16, paddingBottom: 24 },
-  centered: { flex: 1, justifyContent: "center", alignItems: "center", padding: 24 },
-  stateText: { fontSize: 15, color: "#555", marginTop: 12, textAlign: "center" },
-  stateSubtext: { fontSize: 13, color: "#999", marginTop: 6, textAlign: "center" },
+function createStyles(colors: ThemeColors) {
+  return StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: colors.background,
+  },
+  header: {
+    backgroundColor: colors.headerBackground,
+    padding: 16,
+    paddingBottom: 12,
+  },
+  headerText: {
+    fontSize: 15,
+    fontWeight: "600",
+    color: colors.headerText,
+  },
+  list: {
+    paddingHorizontal: 16,
+    paddingTop: 16,
+    paddingBottom: 24,
+  },
+  centered: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 24,
+    backgroundColor: colors.background,
+  },
+  emptyIcon: {
+    fontSize: 48,
+    marginBottom: 12,
+  },
+  errorIcon: {
+    fontSize: 48,
+    marginBottom: 12,
+  },
+  stateText: {
+    fontSize: 16,
+    color: colors.text,
+    marginTop: 12,
+    textAlign: "center",
+    fontWeight: "600",
+  },
+  stateSubtext: {
+    fontSize: 14,
+    color: colors.textMuted,
+    marginTop: 6,
+    textAlign: "center",
+  },
 });
+}

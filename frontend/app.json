@@ -1,22 +1,75 @@
 {
   "expo": {
-    "name": "Sports Finder",
-    "slug": "sports-finder-app",
+    "name": "Hustl",
+    "slug": "hustl",
+    "scheme": "hustl",
     "version": "1.0.0",
     "orientation": "portrait",
-    "userInterfaceStyle": "automatic",
-    "assetBundlePatterns": ["**/*"],
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "assetBundlePatterns": [
+      "**/*"
+    ],
     "ios": {
       "supportsTablet": true,
+      "icon": "./assets/icon.png",
       "infoPlist": {
-        "NSLocationWhenInUseUsageDescription": "We use your location to find sports facilities near you."
+        "NSLocationWhenInUseUsageDescription": "We use your location to find sports facilities near you.",
+        "ITSAppUsesNonExemptEncryption": false
+      },
+      "bundleIdentifier": "com.hustl",
+      "config": {
+        "googleMapsApiKey": "AIzaSyA6w--R_VGbjNwTmfplC96JgVhZ-ztEwHY"
       }
     },
     "android": {
-      "permissions": ["ACCESS_FINE_LOCATION", "ACCESS_COARSE_LOCATION"]
+      "versionCode": 21,
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#1B4332"
+      },
+      "permissions": [
+        "ACCESS_FINE_LOCATION",
+        "ACCESS_COARSE_LOCATION"
+      ],
+      "package": "com.hustl",
+      "config": {
+        "googleMaps": {
+          "apiKey": "AIzaSyA6w--R_VGbjNwTmfplC96JgVhZ-ztEwHY"
+        }
+      }
     },
     "extra": {
-      "apiUrl": "http://localhost:8000"
-    }
+      "apiUrl": "https://sportify-black-gamma.vercel.app",
+      "googleMapsApiKey": "AIzaSyA6w--R_VGbjNwTmfplC96JgVhZ-ztEwHY",
+      "eas": {
+        "projectId": "63ed57be-1990-4940-9388-dd680c07f552"
+      }
+    },
+    "owner": "shreyaskorlapatis-team",
+    "plugins": [
+      "expo-font",
+      "@react-native-community/datetimepicker",
+      "expo-web-browser",
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/splash-logo.png",
+          "imageWidth": 200,
+          "backgroundColor": "#C6E7CE",
+          "ios": {
+            "image": "./assets/splash-logo.png",
+            "resizeMode": "cover",
+            "enableFullScreenImage_legacy": true
+          }
+        }
+      ],
+      [
+        "react-native-maps",
+        {
+          "androidGoogleMapsApiKey": "AIzaSyA6w--R_VGbjNwTmfplC96JgVhZ-ztEwHY"
+        }
+      ]
+    ]
   }
 }

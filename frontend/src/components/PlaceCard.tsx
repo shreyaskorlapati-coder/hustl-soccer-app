@@ -1,6 +1,7 @@
-import React from "react";
+import React, { useMemo } from "react";
 import { Linking, Platform, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
+import { useTheme, ThemeColors } from "../theme";
 import { Place } from "../types";
 
 interface Props {
@@ -18,13 +19,34 @@ function openDirections(lat: number, lon: number, label: string) {
   if (url) Linking.openURL(url);
 }
 
+function getSportIcon(sport: string | null): string {
+  const icons: Record<string, string> = {
+    soccer: "⚽",
+    basketball: "🏀",
+    tennis: "🎾",
+    baseball: "⚾",
+    volleyball: "🏐",
+    golf: "⛳",
+    swimming: "🏊",
+  };
+  return sport ? icons[sport] || "🏟️" : "🏟️";
+}
+
 export default function PlaceCard({ place, onViewOnMap }: Props) {
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
+
   return (
     <View style={styles.card}>
-      <Text style={styles.name}>{place.name}</Text>
-      <Text style={styles.meta}>
-        {place.distance_miles} mi away{place.sport ? ` · ${place.sport}` : ""}
-      </Text>
+      <View style={styles.header}>
+        <Text style={styles.icon}>{getSportIcon(place.sport)}</Text>
+        <View style={styles.headerText}>
+          <Text style={styles.name}>{place.name}</Text>
+          <Text style={styles.meta}>
+            {place.distance_miles} mi away{place.sport ? ` · ${place.sport}` : ""}
+          </Text>
+        </View>
+      </View>
       <View style={styles.actions}>
         <TouchableOpacity
           style={styles.button}
@@ -40,29 +62,60 @@ export default function PlaceCard({ place, onViewOnMap }: Props) {
   );
 }
 
-const styles = StyleSheet.create({
-  card: {
-    backgroundColor: "#fff",
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 12,
-    shadowColor: "#000",
-    shadowOpacity: 0.08,
-    shadowRadius: 6,
-    shadowOffset: { width: 0, height: 2 },
-    elevation: 2,
-  },
-  name: { fontSize: 16, fontWeight: "700", color: "#1a1a1a" },
-  meta: { fontSize: 13, color: "#666", marginTop: 4 },
-  actions: { flexDirection: "row", marginTop: 12 },
-  button: {
-    backgroundColor: "#1e88e5",
-    paddingVertical: 8,
-    paddingHorizontal: 14,
-    borderRadius: 8,
-    marginRight: 10,
-  },
-  secondaryButton: { backgroundColor: "#eef3fb" },
-  buttonText: { color: "#fff", fontWeight: "600", fontSize: 13 },
-  secondaryButtonText: { color: "#1e88e5" },
-});
+function createStyles(colors: ThemeColors) {
+  return StyleSheet.create({
+    card: {
+      backgroundColor: colors.card,
+      borderRadius: 12,
+      padding: 16,
+      marginBottom: 12,
+      borderWidth: 1,
+      borderColor: colors.inputBorder,
+    },
+    header: {
+      flexDirection: "row",
+      alignItems: "flex-start",
+    },
+    icon: {
+      fontSize: 28,
+      marginRight: 12,
+    },
+    headerText: {
+      flex: 1,
+    },
+    name: {
+      fontSize: 16,
+      fontWeight: "700",
+      color: colors.text,
+    },
+    meta: {
+      fontSize: 13,
+      color: colors.textMuted,
+      marginTop: 4,
+    },
+    actions: {
+      flexDirection: "row",
+      marginTop: 14,
+    },
+    button: {
+      backgroundColor: colors.accent,
+      paddingVertical: 10,
+      paddingHorizontal: 16,
+      borderRadius: 8,
+      marginRight: 10,
+    },
+    secondaryButton: {
+      backgroundColor: "transparent",
+      borderWidth: 1,
+      borderColor: colors.accent,
+    },
+    buttonText: {
+      color: colors.textInverse,
+      fontWeight: "600",
+      fontSize: 13,
+    },
+    secondaryButtonText: {
+      color: colors.accent,
+    },
+  });
+}

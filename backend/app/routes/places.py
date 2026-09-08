@@ -20,6 +20,25 @@ def _cache_key(lat: float, lon: float, sport: str, radius: int) -> str:
     return f"{round(lat, 3)}:{round(lon, 3)}:{sport}:{radius}"
 
 
+def _build_address(tags: dict) -> str | None:
+    if full_addr := tags.get("addr:full"):
+        return full_addr
+
+    parts = []
+    if housenumber := tags.get("addr:housenumber"):
+        parts.append(housenumber)
+    if street := tags.get("addr:street"):
+        parts.append(street)
+    if city := tags.get("addr:city"):
+        parts.append(city)
+    if state := tags.get("addr:state"):
+        parts.append(state)
+    if postcode := tags.get("addr:postcode"):
+        parts.append(postcode)
+
+    return ", ".join(parts) if parts else None
+
+
 def _normalize_elements(elements: list[dict], lat: float, lon: float) -> list[Place]:
     seen_ids: set[tuple[str, int]] = set()
     places: list[Place] = []
@@ -47,6 +66,7 @@ def _normalize_elements(elements: list[dict], lat: float, lon: float) -> list[Pl
         places.append(
             Place(
                 name=name,
+                address=_build_address(tags),
                 lat=place_lat,
                 lon=place_lon,
                 osm_type=osm_type,

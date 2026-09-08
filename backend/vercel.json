@@ -1,0 +1,20 @@
+{
+  "version": 2,
+  "public": true,
+  "builds": [
+    {
+      "src": "app/main.py",
+      "use": "@vercel/python"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/(.*)",
+      "dest": "app/main.py"
+    }
+  ],
+  "env": {
+    "DATABASE_URL": "postgresql://postgres.afzprzpxbiryblooffiy:dLE9wmWWKzz4IoaO@aws-0-us-east-1.pooler.supabase.com:6543/postgres",
+    "SKIP_DB_INIT": "true"
+  }
+}
