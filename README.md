@@ -1,13 +1,22 @@
-# Sports Finder
+# Hustl
 
-Find nearby sports facilities and organize pickup games with friends. Built with FastAPI backend and React Native (Expo) frontend, using OpenStreetMap data.
+Find nearby sports facilities, organize pickup games, create teams, and run tournaments with friends. Built with FastAPI backend and React Native (Expo) frontend, using OpenStreetMap data.
+
+## Features
+
+- 🏟️ **Find Places** - Discover nearby sports facilities using OpenStreetMap data
+- ⚽ **Pickup Games** - Create and join pickup games with other players
+- 👥 **Teams** - Form teams, manage members, and compete together
+- 🏆 **Tournaments** - Organize bracket-style tournaments with automatic scheduling
+- 🔔 **Notifications** - Push notifications for game reminders, team updates, and tournament results
+- 🗺️ **Maps** - Interactive maps with Google Maps integration
+- 🔐 **Auth** - Email/password and Google OAuth authentication
 
 ## Prerequisites
 
 - Python 3.11+
 - Node.js 18+
 - Docker (for PostgreSQL + PostGIS)
-
 ## Quick Start
 
 ### 1. Start the Database
@@ -52,11 +61,13 @@ npx expo start
 
 ### 4. Connect from Physical Device
 
-Create `frontend/.env` with your machine's LAN IP:
+For local development, create `frontend/.env` with your machine's LAN IP:
 
 ```
 EXPO_PUBLIC_API_URL=http://192.168.1.XX:8000
 ```
+
+The production app uses `https://backend-hustl5.vercel.app` as configured in `app.json`.
 
 ## API Reference
 
@@ -132,6 +143,127 @@ All auth endpoints return:
 
 Supported sports: `soccer`, `basketball`, `football`, `baseball`, `volleyball`, `tennis`, `other`
 
+### Teams (requires auth)
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `POST` | `/api/teams` | Create a team |
+| `GET` | `/api/teams` | List all teams (optional `?sport=` filter) |
+| `GET` | `/api/teams/my-teams` | List teams you're a member of |
+| `GET` | `/api/teams/my-created-teams` | List teams you own |
+| `GET` | `/api/teams/my-joined-teams` | List teams you joined (not owned) |
+| `GET` | `/api/teams/{id}` | Get team details |
+| `PUT` | `/api/teams/{id}` | Update team (owner only) |
+| `POST` | `/api/teams/{id}/join` | Join a team |
+| `POST` | `/api/teams/{id}/leave` | Leave a team |
+| `POST` | `/api/teams/{id}/members` | Add a member (owner only) |
+| `DELETE` | `/api/teams/{id}/members/{user_id}` | Remove a member |
+| `DELETE` | `/api/teams/{id}` | Delete a team (owner only) |
+
+#### Create Team Payload
+```json
+{
+  "name": "FC Lightning",
+  "description": "Competitive soccer team",
+  "sport": "soccer"
+}
+```
+
+#### Add Member Payload
+```json
+{
+  "user_id": "uuid",
+  "role": "member"
+}
+```
+Or by email:
+```json
+{
+  "email": "player@example.com",
+  "role": "member"
+}
+```
+
+### Tournaments (requires auth)
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `POST` | `/api/tournaments` | Create a tournament |
+| `GET` | `/api/tournaments` | List tournaments (optional `?sport=&status=` filters) |
+| `GET` | `/api/tournaments/my-tournaments` | List tournaments you organize or participate in |
+| `GET` | `/api/tournaments/{id}` | Get tournament details with bracket |
+| `POST` | `/api/tournaments/{id}/register` | Register a team (team owner only) |
+| `POST` | `/api/tournaments/{id}/generate-bracket` | Generate bracket (organizer only) |
+| `PUT` | `/api/tournaments/{id}/matches/{match_id}/score` | Update match score (organizer only) |
+| `PUT` | `/api/tournaments/{id}/matches/{match_id}/teams` | Set match teams (organizer only) |
+| `DELETE` | `/api/tournaments/{id}` | Delete tournament (organizer only) |
+
+#### Create Tournament Payload
+```json
+{
+  "name": "Summer Cup 2024",
+  "sport": "soccer",
+  "description": "Annual summer tournament",
+  "max_teams": 8
+}
+```
+
+#### Register Team Payload
+```json
+{
+  "team_id": "uuid"
+}
+```
+
+#### Update Match Score Payload
+```json
+{
+  "team1_score": 3,
+  "team2_score": 1
+}
+```
+
+Tournament statuses: `registration`, `in_progress`, `completed`
+
+### Users (requires auth)
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `GET` | `/api/users` | Search users by name/email (`?q=`) |
+| `GET` | `/api/users/me` | Get current user profile |
+| `GET` | `/api/users/{id}` | Get user by ID |
+| `PUT` | `/api/users/me` | Update current user profile |
+| `PUT` | `/api/users/me/password` | Change password |
+| `DELETE` | `/api/users/me` | Delete account |
+
+#### Update Profile Payload
+```json
+{
+  "name": "John Doe",
+  "email": "john@example.com",
+  "phone": "+1234567890"
+}
+```
+
+#### Change Password Payload
+```json
+{
+  "current_password": "oldpassword123",
+  "new_password": "newpassword456"
+}
+```
+
+### Contact (requires auth)
+
+#### `POST /api/contact`
+Send a contact/feedback message.
+```json
+{
+  "subject": "Feature Request",
+  "message": "I'd love to see volleyball courts added!"
+}
+```
+
 ### Notifications (requires auth)
 
 | Method | Endpoint | Description |
@@ -179,6 +311,12 @@ Supported sports: `soccer`, `basketball`, `football`, `baseball`, `volleyball`, 
 | `GOOGLE_WEB_CLIENT_ID` | - | Google OAuth Web Client ID |
 | `GOOGLE_IOS_CLIENT_ID` | - | Google OAuth iOS Client ID |
 | `GOOGLE_ANDROID_CLIENT_ID` | - | Google OAuth Android Client ID |
+| `SMTP_HOST` | - | SMTP server hostname (for contact form) |
+| `SMTP_PORT` | `587` | SMTP server port |
+| `SMTP_USER` | - | SMTP username |
+| `SMTP_PASS` | - | SMTP password |
+| `SMTP_FROM` | `SMTP_USER` | From email address |
+| `CONTACT_EMAIL` | `SMTP_FROM` | Email to receive contact messages |
 
 ### Frontend
 
@@ -201,3 +339,50 @@ Supported sports: `soccer`, `basketball`, `football`, `baseball`, `volleyball`, 
 5. Add the Client IDs to your environment variables
 
 For Expo Go testing, you only need the Web Client ID.
+
+## Project Structure
+
+```
+hustl-soccer-app/
+├── backend/
+│   ├── app/
+│   │   ├── routes/          # API endpoints
+│   │   ├── models/          # SQLAlchemy models
+│   │   ├── schemas/         # Pydantic schemas
+│   │   ├── services/        # Business logic (notifications, etc.)
+│   │   ├── auth/            # Authentication utilities
+│   │   └── utils/           # Helper functions
+│   ├── docker-compose.yml   # PostgreSQL + PostGIS
+│   └── requirements.txt
+├── frontend/
+│   ├── src/
+│   │   ├── screens/         # App screens
+│   │   ├── components/      # Reusable components
+│   │   ├── context/         # React contexts (Auth, Notifications)
+│   │   ├── hooks/           # Custom hooks
+│   │   ├── navigation/      # React Navigation setup
+│   │   ├── api/             # API client
+│   │   └── theme/           # Colors and styling
+│   ├── app.json             # Expo configuration
+│   └── App.tsx              # Entry point
+└── README.md
+```
+
+## Tech Stack
+
+### Backend
+- **FastAPI** - Modern async Python web framework
+- **PostgreSQL + PostGIS** - Spatial database for location queries
+- **SQLAlchemy** - Async ORM
+- **JWT** - Token-based authentication
+- **Expo Push Notifications** - Mobile push notifications
+
+### Frontend
+- **React Native (Expo)** - Cross-platform mobile development
+- **React Navigation** - Navigation library
+- **Google Maps** - Map integration
+- **Expo Push Notifications** - Notification handling
+
+## License
+
+MIT
