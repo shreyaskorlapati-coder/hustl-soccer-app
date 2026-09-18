@@ -15,7 +15,7 @@
  *   1. Create an OAuth Web Application client — add these redirect URIs:
  *        https://auth.expo.io/@<expo-username>/hustl     (Expo Go)
  *        hustl://                                         (native builds)
- *   2. Create an iOS OAuth client (bundle ID: com.hustl)
+ *   2. Create an iOS OAuth client (bundle ID: app.hustl)
  *   3. Create an Android OAuth client (package: com.hustl)
  *   4. Fill in the three EXPO_PUBLIC_GOOGLE_*_CLIENT_ID vars in frontend/.env
  */

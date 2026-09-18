@@ -17,9 +17,10 @@
         "NSLocationWhenInUseUsageDescription": "We use your location to find sports facilities near you.",
         "ITSAppUsesNonExemptEncryption": false
       },
-      "bundleIdentifier": "com.hustl",
+      "bundleIdentifier": "app.hustl",
+      "appleTeamId": "Y8U8QTNTLF" ,
       "config": {
-        "googleMapsApiKey": "AIzaSyA6w--R_VGbjNwTmfplC96JgVhZ-ztEwHY"
+        "googleMapsApiKey": "AIzaSyA0ugn55LyXnmJ4h1Xy5BzeK9z105EuLj8"
       }
     },
     "android": {
@@ -67,6 +68,7 @@
       [
         "react-native-maps",
         {
+          "iosGoogleMapsApiKey": "AIzaSyA0ugn55LyXnmJ4h1Xy5BzeK9z105EuLj8",
           "androidGoogleMapsApiKey": "AIzaSyA6w--R_VGbjNwTmfplC96JgVhZ-ztEwHY"
         }
       ]
