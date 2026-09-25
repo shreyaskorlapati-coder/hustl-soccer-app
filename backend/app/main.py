@@ -135,6 +135,37 @@ app.include_router(notifications.router, tags=["notifications"])
 app.include_router(contact.router, tags=["contact"])
 
 
+@app.get("/")
+async def root():
+    """Root endpoint with API info."""
+    return {
+        "name": "Hustl API",
+        "version": "1.0.0",
+        "description": "Backend API for Hustl - find sports facilities, organize games, teams & tournaments",
+        "docs": "/docs",
+        "health": "/health",
+    }
+
+
 @app.get("/health")
 async def health_check():
-    return {"status": "ok"}
+    """Health check endpoint with database connectivity test."""
+    from sqlalchemy import text
+    from app.database import async_session_maker
+    
+    health = {
+        "status": "ok",
+        "database": "unknown",
+    }
+    
+    try:
+        async with async_session_maker() as session:
+            result = await session.execute(text("SELECT 1"))
+            result.scalar()
+            health["database"] = "connected"
+    except Exception as e:
+        health["status"] = "degraded"
+        health["database"] = f"error: {str(e)[:100]}"
+        logger.error(f"Health check database error: {e}")
+    
+    return health
