@@ -1,8 +1,20 @@
-# Hustl Backend — Run Locally
+# Hustl Backend
 
-FastAPI API for sports facilities, pickup games, teams, and tournaments.
+FastAPI backend for the Hustl sports app — find nearby facilities, organize pickup games, create teams, and run tournaments.
 
-Once it is running:
+## Features
+
+- 🔐 **Authentication** - Email/password signup, Google OAuth, password reset
+- ⚽ **Games** - Create and join pickup games with skill levels and privacy settings
+- 👥 **Teams** - Form teams, manage members, join/leave functionality
+- 🏆 **Tournaments** - Bracket-style tournaments with automatic scheduling
+- 🗺️ **Places** - Find nearby sports facilities via OpenStreetMap/Overpass
+- 🔔 **Push Notifications** - Expo push notifications for game reminders and updates
+- 📧 **Contact** - Contact form with SMTP email support
+
+## Quick Links
+
+Once the server is running:
 
 - API: `http://localhost:8000`
 - Health: `http://localhost:8000/health`
@@ -263,3 +275,144 @@ Confirm Docker is running and port `5432` is free. `DATABASE_URL` must use `loca
 ```bash
 PIPENV_IGNORE_VIRTUALENVS=1 pipenv run uvicorn app.main:app --reload --host 0.0.0.0 --port 8001
 ```
+
+## Project Structure
+
+```
+backend/
+├── app/
+│   ├── main.py              # FastAPI app entrypoint
+│   ├── database.py          # Async SQLAlchemy setup
+│   ├── logging_config.py    # Logging configuration
+│   ├── auth/
+│   │   ├── dependencies.py  # Auth middleware (get_current_user)
+│   │   └── utils.py         # Password hashing, JWT, Google OAuth
+│   ├── models/
+│   │   ├── db_models.py     # SQLAlchemy ORM models
+│   │   └── place.py         # Place model for Overpass results
+│   ├── routes/
+│   │   ├── auth.py          # /auth/* endpoints
+│   │   ├── games.py         # /api/games/* endpoints
+│   │   ├── teams.py         # /api/teams/* endpoints
+│   │   ├── tournaments.py   # /api/tournaments/* endpoints
+│   │   ├── places.py        # /api/places/* endpoints
+│   │   ├── places_crud.py   # Place CRUD for admin
+│   │   ├── notifications.py # /api/notifications/* endpoints
+│   │   ├── users.py         # /api/users/* endpoints
+│   │   ├── contact.py       # /api/contact endpoint
+│   │   └── geocode.py       # /geocode endpoint
+│   ├── schemas/
+│   │   ├── auth.py          # Auth request/response schemas
+│   │   ├── game.py          # Game schemas
+│   │   ├── team.py          # Team schemas
+│   │   ├── tournament.py    # Tournament schemas
+│   │   └── notification.py  # Notification schemas
+│   ├── services/
+│   │   ├── notifications.py # Push notification service
+│   │   ├── overpass.py      # Overpass API client
+│   │   └── nominatim.py     # Nominatim geocoding client
+│   └── utils/
+│       ├── distance.py      # Distance calculations
+│       └── osm_query.py     # OSM query helpers
+├── docker-compose.yml       # PostgreSQL + PostGIS
+├── requirements.txt         # Python dependencies
+├── Pipfile                  # Pipenv dependencies
+├── vercel.json              # Vercel deployment config
+├── Dockerfile.vercel        # Optional container build
+├── .env.example             # Environment template
+└── README.md
+```
+
+## API Routes Summary
+
+All endpoints except auth require a valid JWT token in the `Authorization: Bearer <token>` header.
+
+### Authentication (`/auth`)
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/auth/signup` | Register with email/password |
+| POST | `/auth/login` | Login with email/password |
+| POST | `/auth/google` | Login with Google ID token |
+| POST | `/auth/forgot-password` | Request password reset OTP |
+| POST | `/auth/reset-password` | Reset password with OTP |
+
+### Games (`/api/games`)
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/api/games` | Create a game |
+| GET | `/api/games` | List your games |
+| GET | `/api/games/{id}` | Get game details |
+| POST | `/api/games/{id}/join` | Join a game |
+| POST | `/api/games/{id}/leave` | Leave a game |
+| DELETE | `/api/games/{id}` | Delete a game |
+
+### Teams (`/api/teams`)
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/api/teams` | Create a team |
+| GET | `/api/teams` | List all teams |
+| GET | `/api/teams/my-teams` | List your teams |
+| GET | `/api/teams/{id}` | Get team details |
+| PUT | `/api/teams/{id}` | Update team |
+| POST | `/api/teams/{id}/join` | Join a team |
+| POST | `/api/teams/{id}/leave` | Leave a team |
+| POST | `/api/teams/{id}/members` | Add a member |
+| DELETE | `/api/teams/{id}/members/{user_id}` | Remove a member |
+| DELETE | `/api/teams/{id}` | Delete a team |
+
+### Tournaments (`/api/tournaments`)
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/api/tournaments` | Create a tournament |
+| GET | `/api/tournaments` | List tournaments |
+| GET | `/api/tournaments/my-tournaments` | List your tournaments |
+| GET | `/api/tournaments/{id}` | Get tournament with bracket |
+| POST | `/api/tournaments/{id}/register` | Register a team |
+| POST | `/api/tournaments/{id}/generate-bracket` | Generate bracket |
+| PUT | `/api/tournaments/{id}/matches/{match_id}/score` | Update match score |
+| DELETE | `/api/tournaments/{id}` | Delete tournament |
+
+### Users (`/api/users`)
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/users` | Search users |
+| GET | `/api/users/me` | Get current user |
+| PUT | `/api/users/me` | Update profile |
+| PUT | `/api/users/me/password` | Change password |
+| DELETE | `/api/users/me` | Delete account |
+
+### Places (`/api/places`)
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/places/nearby` | Find nearby sports facilities |
+
+### Notifications (`/api/notifications`)
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/api/notifications/device-token` | Register push token |
+| DELETE | `/api/notifications/device-token/{token}` | Unregister token |
+| GET | `/api/notifications/preferences` | Get preferences |
+| PUT | `/api/notifications/preferences` | Update preferences |
+| GET | `/api/notifications` | List notifications |
+| POST | `/api/notifications/mark-read` | Mark as read |
+| GET | `/api/notifications/unread-count` | Get unread count |
+
+### Other
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/geocode` | Geocode an address |
+| POST | `/api/contact` | Send contact message |
+| GET | `/health` | Health check |
+
+For full request/response schemas, see the interactive docs at `/docs`.
+
+## Tech Stack
+
+- **FastAPI** - Modern async Python web framework
+- **PostgreSQL + PostGIS** - Spatial database for location queries
+- **SQLAlchemy** - Async ORM with `asyncpg` driver
+- **Pydantic** - Data validation and serialization
+- **JWT** - Token-based authentication (PyJWT)
+- **bcrypt** - Password hashing
+- **Overpass/Nominatim** - OpenStreetMap data for places
+- **Expo Push** - Mobile push notifications

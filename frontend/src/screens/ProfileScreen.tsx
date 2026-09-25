@@ -1,7 +1,8 @@
 import { useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import React from "react";
+import React, { useState } from "react";
 import {
+  ActivityIndicator,
   Alert,
   ScrollView,
   StyleSheet,
@@ -11,6 +12,7 @@ import {
   View,
 } from "react-native";
 
+import { deleteCurrentUser, getApiErrorMessage } from "../api/client";
 import { useAuth } from "../context/AuthContext";
 import { useTheme, Colors } from "../theme";
 import { RootStackParamList } from "../types";
@@ -19,6 +21,7 @@ export default function ProfileScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const { user, logout } = useAuth();
   const { colors, isDark, themeMode, setThemeMode, toggleTheme } = useTheme();
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const initials = user?.name
     ?.split(" ")
@@ -56,6 +59,57 @@ export default function ProfileScreen() {
     );
   }
 
+  function handleDeleteAccount() {
+    Alert.alert(
+      "Delete Account",
+      "Are you sure you want to permanently delete your account? This action cannot be undone and all your data will be lost.",
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Delete",
+          style: "destructive",
+          onPress: () => {
+            Alert.alert(
+              "Confirm Deletion",
+              "This is your final warning. Your account, games, teams, and all associated data will be permanently deleted.",
+              [
+                { text: "Cancel", style: "cancel" },
+                {
+                  text: "Delete Forever",
+                  style: "destructive",
+                  onPress: async () => {
+                    setIsDeleting(true);
+                    try {
+                      await deleteCurrentUser();
+                      Alert.alert(
+                        "Account Deleted",
+                        "Your account has been permanently deleted.",
+                        [{ text: "OK", onPress: logout }]
+                      );
+                    } catch (error) {
+                      Alert.alert("Error", getApiErrorMessage(error, "Failed to delete account. Please try again."));
+                    } finally {
+                      setIsDeleting(false);
+                    }
+                  },
+                },
+              ]
+            );
+          },
+        },
+      ]
+    );
+  }
+
+  if (isDeleting) {
+    return (
+      <View style={[styles.container, styles.loadingContainer, { backgroundColor: colors.background }]}>
+        <ActivityIndicator size="large" color={colors.primary} />
+        <Text style={[styles.loadingText, { color: colors.text }]}>Deleting account...</Text>
+      </View>
+    );
+  }
+
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <View style={[styles.header, { backgroundColor: colors.headerBackground }]}>
@@ -82,6 +136,18 @@ export default function ProfileScreen() {
             <View style={styles.menuContent}>
               <Text style={[styles.menuLabel, { color: colors.text }]}>Edit Profile</Text>
               <Text style={[styles.menuValue, { color: colors.textMuted }]}>Update your information</Text>
+            </View>
+            <Text style={[styles.menuArrow, { color: colors.textMuted }]}>›</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[styles.menuItem, { backgroundColor: colors.card }]}
+            onPress={handleDeleteAccount}
+          >
+            <Text style={styles.menuIcon}>🗑️</Text>
+            <View style={styles.menuContent}>
+              <Text style={[styles.menuLabel, { color: Colors.error }]}>Delete Account</Text>
+              <Text style={[styles.menuValue, { color: colors.textMuted }]}>Permanently remove your account</Text>
             </View>
             <Text style={[styles.menuArrow, { color: colors.textMuted }]}>›</Text>
           </TouchableOpacity>
@@ -179,6 +245,8 @@ export default function ProfileScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
+  loadingContainer: { justifyContent: "center", alignItems: "center" },
+  loadingText: { marginTop: 16, fontSize: 16 },
   header: {
     paddingTop: 60,
     paddingBottom: 30,
