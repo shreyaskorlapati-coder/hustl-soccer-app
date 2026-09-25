@@ -355,7 +355,7 @@ async def generate_bracket(
     tournament = result.scalar_one()
 
     # Notify all team owners that bracket is generated
-    team_owner_ids = [t.owner_id for t in tournament.teams]
+    team_owner_ids = [t.owner_id for t in tournament.teams if t.owner_id]
     if team_owner_ids:
         await notification_service.notify_users(
             db=db,
@@ -440,7 +440,7 @@ async def update_match_score(
 
     # Notify both team owners about the match result
     if team1 and team2:
-        team_owner_ids = [team1.owner_id, team2.owner_id]
+        team_owner_ids = [oid for oid in [team1.owner_id, team2.owner_id] if oid]
         winner_name = team1.name if match.winner_id == team1.id else team2.name
         await notification_service.notify_users(
             db=db,

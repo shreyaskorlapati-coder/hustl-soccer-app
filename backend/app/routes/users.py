@@ -1,12 +1,20 @@
 from fastapi import APIRouter, Depends, HTTPException, Query, status
-from sqlalchemy import func, or_, select
+from sqlalchemy import delete, func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.auth.dependencies import get_current_user
 from app.auth.utils import hash_password, verify_password
 from app.database import get_db
 from app.logging_config import get_logger
-from app.models.db_models import UserDB
+from app.models.db_models import (
+    GameDB,
+    TeamDB,
+    TournamentDB,
+    UserDB,
+    game_participants,
+    team_members,
+    tournament_teams,
+)
 from app.schemas.auth import (
     UserListResponse,
     UserPasswordUpdate,
@@ -160,13 +168,54 @@ async def delete_current_user(
     current_user: UserDB = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    """Delete current user's account."""
-    logger.info(f"Deleting user: id={current_user.id}")
+    """Delete current user's account and all associated data."""
+    logger.info(f"Deleting user and associated data: id={current_user.id}")
 
+    user_id = current_user.id
+
+    # 1. Remove user from game_participants (games they joined)
+    await db.execute(
+        delete(game_participants).where(game_participants.c.user_id == user_id)
+    )
+
+    # 2. Remove user from team_members (teams they joined)
+    await db.execute(
+        delete(team_members).where(team_members.c.user_id == user_id)
+    )
+
+    # 3. Delete games created by the user (goals cascade automatically)
+    await db.execute(
+        delete(GameDB).where(GameDB.creator_id == user_id)
+    )
+
+    # 4. Get teams owned by user to clean up tournament registrations
+    teams_result = await db.execute(
+        select(TeamDB.id).where(TeamDB.owner_id == user_id)
+    )
+    owned_team_ids = [row[0] for row in teams_result.fetchall()]
+
+    if owned_team_ids:
+        # Remove owned teams from tournaments
+        await db.execute(
+            delete(tournament_teams).where(tournament_teams.c.team_id.in_(owned_team_ids))
+        )
+
+    # 5. Delete teams owned by the user
+    await db.execute(
+        delete(TeamDB).where(TeamDB.owner_id == user_id)
+    )
+
+    # 6. Delete tournaments organized by the user (matches cascade automatically)
+    await db.execute(
+        delete(TournamentDB).where(TournamentDB.organizer_id == user_id)
+    )
+
+    # 7. Finally delete the user (notifications, device_tokens, password_reset_tokens, 
+    #    notification_preferences cascade automatically via ondelete="CASCADE")
     await db.delete(current_user)
     await db.commit()
 
-    logger.info(f"Deleted user: id={current_user.id}")
+    logger.info(f"Deleted user and all associated data: id={user_id}")
     return None
 
 
@@ -176,7 +225,7 @@ async def delete_user(
     current_user: UserDB = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    """Delete a user by ID (admin only or self-delete)."""
+    """Delete a user by ID (self-delete only). Redirects to /me endpoint logic."""
     logger.info(f"Deleting user: id={user_id} by user={current_user.id}")
 
     if user_id != current_user.id:
@@ -185,15 +234,5 @@ async def delete_user(
             detail="Not authorized to delete this user.",
         )
 
-    result = await db.execute(select(UserDB).where(UserDB.id == user_id))
-    user = result.scalar_one_or_none()
-
-    if not user:
-        logger.warning(f"User not found for delete: id={user_id}")
-        raise HTTPException(status_code=404, detail=USER_NOT_FOUND)
-
-    await db.delete(user)
-    await db.commit()
-
-    logger.info(f"Deleted user: id={user_id}")
-    return None
+    # Use the same logic as delete_current_user
+    return await delete_current_user(current_user=current_user, db=db)

@@ -133,8 +133,13 @@ class NotificationService:
         reference_id: str | None = None,
         data: dict | None = None,
         send_push: bool = True,
-    ) -> NotificationDB:
+    ) -> NotificationDB | None:
         """Create a notification record and optionally send push."""
+        # Guard against null user_id
+        if not user_id:
+            logger.warning(f"Attempted to create notification with null user_id: {title}")
+            return None
+        
         notification = NotificationDB(
             user_id=user_id,
             title=title,
@@ -181,6 +186,8 @@ class NotificationService:
         exclude_user_id: str | None = None,
     ) -> list[NotificationDB]:
         """Send notifications to multiple users."""
+        # Filter out None/null user IDs and excluded user
+        user_ids = [uid for uid in user_ids if uid is not None]
         if exclude_user_id:
             user_ids = [uid for uid in user_ids if uid != exclude_user_id]
         
