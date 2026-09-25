@@ -7,7 +7,12 @@ from app.auth.utils import hash_password, verify_password
 from app.database import get_db
 from app.logging_config import get_logger
 from app.models.db_models import (
+    DeviceTokenDB,
     GameDB,
+    GoalDB,
+    NotificationDB,
+    NotificationPreferenceDB,
+    PasswordResetTokenDB,
     TeamDB,
     TournamentDB,
     UserDB,
@@ -183,7 +188,12 @@ async def delete_current_user(
         delete(team_members).where(team_members.c.user_id == user_id)
     )
 
-    # 3. Delete games created by the user (goals cascade automatically)
+    # 3. Delete goals scored by the user
+    await db.execute(
+        delete(GoalDB).where(GoalDB.scorer_id == user_id)
+    )
+
+    # 4. Delete games created by the user (remaining goals cascade automatically)
     await db.execute(
         delete(GameDB).where(GameDB.creator_id == user_id)
     )
@@ -210,9 +220,24 @@ async def delete_current_user(
         delete(TournamentDB).where(TournamentDB.organizer_id == user_id)
     )
 
-    # 7. Finally delete the user (notifications, device_tokens, password_reset_tokens, 
-    #    notification_preferences cascade automatically via ondelete="CASCADE")
-    await db.delete(current_user)
+    # 7. Delete user-related records explicitly (SQLAlchemy ORM interferes with DB CASCADE)
+    await db.execute(
+        delete(NotificationDB).where(NotificationDB.user_id == user_id)
+    )
+    await db.execute(
+        delete(DeviceTokenDB).where(DeviceTokenDB.user_id == user_id)
+    )
+    await db.execute(
+        delete(NotificationPreferenceDB).where(NotificationPreferenceDB.user_id == user_id)
+    )
+    await db.execute(
+        delete(PasswordResetTokenDB).where(PasswordResetTokenDB.user_id == user_id)
+    )
+
+    # 8. Finally delete the user
+    await db.execute(
+        delete(UserDB).where(UserDB.id == user_id)
+    )
     await db.commit()
 
     logger.info(f"Deleted user and all associated data: id={user_id}")
